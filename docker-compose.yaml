@@ -22,6 +22,13 @@ services:
         condition: service_healthy
     expose:
       - "8080"
+    networks:
+      - coolify
+      - internal
+    # Traefik lives on the shared `coolify` network; pin routing to it instead of
+    # the per-app bridge (Coolify honours an explicit traefik.docker.network).
+    labels:
+      - "traefik.docker.network=coolify"
     volumes:
       - nocodb_data:/usr/app/data
     healthcheck:
@@ -38,6 +45,8 @@ services:
       POSTGRES_USER: nocodb
       POSTGRES_PASSWORD: "${NOCODB_DB_PASSWORD}"
       POSTGRES_DB: nocodb
+    networks:
+      - internal
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -51,6 +60,8 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    networks:
+      - internal
     volumes:
       - redis_data:/data
     healthcheck:
@@ -63,3 +74,11 @@ volumes:
   nocodb_data:
   pgdata:
   redis_data:
+
+networks:
+  # Shared bridge the Coolify proxy is attached to.
+  coolify:
+    external: true
+  # Private network for the database and cache.
+  internal:
+    internal: true

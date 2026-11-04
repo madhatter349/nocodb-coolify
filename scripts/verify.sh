@@ -47,4 +47,9 @@ ok "healthchecks declared"
 grep -q 'https://nocodb.382972.xyz' docker-compose.yaml || fail "public URL not set"
 ok "public URL configured"
 
+grep -q 'traefik.docker.network=coolify' docker-compose.yaml \
+  || fail "nocodb must pin Traefik to the shared coolify network"
+grep -q 'external: true' docker-compose.yaml || fail "coolify network must be external"
+ok "proxy network wiring"
+
 echo "verify: PASS"
