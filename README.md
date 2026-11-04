@@ -38,3 +38,41 @@ there is no unauthenticated "first visitor becomes admin" window.
 ```sh
 bash scripts/verify.sh
 ```
+
+## CRM base layout
+
+The base `NYC Real Estate CRM` is plain NocoDB metadata — no custom code.
+
+| Table | Rows | Purpose |
+| --- | --- | --- |
+| `Properties` | 8 | One row per tax lot; every source property field, plus lender link |
+| `Lenders` | 6 | Lender id, name and lending stats |
+| `Contacts` | 17 | Owners / officers / managers with phone, email, role, call status |
+| `Property Contacts` | 17 | Junction: property ↔ contact, preserving the source Contact1/2/3 slot and role |
+| `Calls` | 0 | One row per call: date, outcome, notes, follow-up date |
+
+`Properties.Lender` is a belongs-to link; `Property Contacts` carries the
+many-to-many relation used by the `Owners & Contacts` lookup fields on
+Properties (`Owner / Contact`, `Phone`, `Contact Status`, `Lender Name`), plus
+`Last Call` / `Next Follow-Up` rollups from `Calls`.
+
+### Views
+
+- Properties → **All Properties** (editable grid), **Call List** (address,
+  phone, owner, status, next follow-up), **Property Cards** (gallery),
+  **Full Record** (every imported column).
+- Contacts → **Call Queue** (status not closed), **Call Pipeline** (kanban by
+  contact status), **Do Not Call**, **All Contacts**.
+- Calls → **Call Log**, **Follow-Ups** (dated follow-ups, ascending).
+- Every grid supports NocoDB's native search, filter, sort and inline editing.
+
+### Cold-call loop
+
+1. Open **Properties → Call List** or **Contacts → Call Queue**.
+2. Click a record to expand it; the linked owner/contact record is one click
+   away.
+3. Log the call in **Calls** (or from the property's *Call History* link) with
+   outcome, notes and a follow-up date.
+4. Move the contact's **Contact Status** in **Call Pipeline**; it leaves the
+   Call Queue when it reaches a closed status.
+5. **Calls → Follow-Ups** lists every call with a follow-up date, soonest first.
