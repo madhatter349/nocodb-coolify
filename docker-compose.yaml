@@ -1,0 +1,65 @@
+# NocoDB — self-hosted NYC real estate CRM
+#
+# Deployed by Coolify from this repo. Every secret is injected at deploy time
+# from Coolify environment variables; nothing sensitive lives in the repo.
+
+services:
+  nocodb:
+    image: nocodb/nocodb:2026.10.1
+    restart: unless-stopped
+    environment:
+      NC_DB: "pg://db:5432?u=nocodb&p=${NOCODB_DB_PASSWORD}&d=nocodb"
+      NC_AUTH_JWT_SECRET: "${NOCODB_JWT_SECRET}"
+      NC_ADMIN_EMAIL: "${NOCODB_ADMIN_EMAIL}"
+      NC_ADMIN_PASSWORD: "${NOCODB_ADMIN_PASSWORD}"
+      NC_SITE_URL: "https://nocodb.382972.xyz"
+      NC_REDIS_URL: "redis://redis:6379/0"
+      NC_DISABLE_MUX: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "8080"
+    volumes:
+      - nocodb_data:/usr/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 --spider http://127.0.0.1:8080/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nocodb
+      POSTGRES_PASSWORD: "${NOCODB_DB_PASSWORD}"
+      POSTGRES_DB: nocodb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nocodb -d nocodb"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  nocodb_data:
+  pgdata:
+  redis_data:
