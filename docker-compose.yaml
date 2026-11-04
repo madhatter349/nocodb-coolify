@@ -13,12 +13,9 @@ services:
       NC_ADMIN_EMAIL: "${NOCODB_ADMIN_EMAIL}"
       NC_ADMIN_PASSWORD: "${NOCODB_ADMIN_PASSWORD}"
       NC_SITE_URL: "https://nocodb.382972.xyz"
-      NC_REDIS_URL: "redis://redis:6379/0"
       NC_DISABLE_MUX: "true"
     depends_on:
       db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     expose:
       - "8080"
@@ -56,29 +53,14 @@ services:
       retries: 10
       start_period: 20s
 
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
-    networks:
-      - internal
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
-
 volumes:
   nocodb_data:
   pgdata:
-  redis_data:
 
 networks:
   # Shared bridge the Coolify proxy is attached to.
   coolify:
     external: true
-  # Private network for the database and cache.
+  # Private network for the database.
   internal:
     internal: true

@@ -1,7 +1,8 @@
 # NocoDB — NYC Real Estate CRM
 
 Self-hosted NocoDB on the Coolify VPS, backed by PostgreSQL with durable named
-volumes. Deployed from this repo by Coolify (`dockercompose` build pack, service
+volumes. No Redis: a single small instance runs NocoDB's in-process cache, which
+keeps the stack to two containers. Deployed from this repo by Coolify (`dockercompose` build pack, service
 `nocodb`, domain `https://nocodb.382972.xyz`).
 
 ## What runs
@@ -10,10 +11,9 @@ volumes. Deployed from this repo by Coolify (`dockercompose` build pack, service
 | --- | --- | --- |
 | `nocodb` | `nocodb/nocodb:2026.10.1` | NocoDB application (port 8080) |
 | `db` | `postgres:17-alpine` | NocoDB metadata + base data |
-| `redis` | `redis:7-alpine` | Cache / queue |
 
-All three keep their state on named Docker volumes (`nocodb_data`, `pgdata`,
-`redis_data`), so redeploys and container restarts do not touch the data.
+Both keep their state on named Docker volumes (`nocodb_data`, `pgdata`), so
+redeploys and container restarts do not touch the data.
 
 ## Required environment variables
 
